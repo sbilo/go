@@ -16,6 +16,7 @@ import (
 	"github.com/stellar/go/support/render/problem"
 	"github.com/stellar/go/support/time"
 	"github.com/stellar/go/xdr"
+	"fmt"
 )
 
 const (
@@ -45,9 +46,14 @@ func (base *Base) GetCursor(name string) string {
 		cursor = lei
 	}
 
-	// if cursor is a negative number, the base.GetInt64() function will return 0
-	cursorInt := base.GetInt64(cursor)
-	return strconv.FormatInt(cursorInt, 10)
+	// In case cursor is negative value, return InvalidField error
+	cursorInt, _ := strconv.Atoi(cursor)
+	if cursorInt < 0 {
+		msg := fmt.Sprintf("the cursor could not be negative %d", cursorInt)
+		base.SetInvalidField("cursor", errors.New(msg))
+	}
+
+	return cursor
 }
 
 // GetString retrieves a string from either the URLParams, form or query string.
