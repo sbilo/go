@@ -2,7 +2,7 @@ package horizon
 
 import (
 	"errors"
-	fmt "fmt"
+	"fmt"
 
 	"github.com/stellar/go/services/horizon/internal/db2"
 	"github.com/stellar/go/services/horizon/internal/db2/history"
@@ -10,8 +10,6 @@ import (
 	"github.com/stellar/go/services/horizon/internal/render/sse"
 	"github.com/stellar/go/services/horizon/internal/resource"
 	halRender "github.com/stellar/go/support/render/hal"
-	"strconv"
-	"github.com/stellar/go/support/render/problem"
 )
 
 // PaymentsIndexAction returns a paged slice of payments based upon the provided
@@ -85,17 +83,6 @@ func (action *PaymentsIndexAction) loadParams() {
 	action.LedgerFilter = action.GetInt32("ledger_id")
 	action.TransactionFilter = action.GetString("tx_id")
 	action.PagingParams = action.GetPageQuery()
-
-	cursorInt, _ := strconv.Atoi(action.PagingParams.Cursor)
-	if cursorInt < 0 {
-		msg := fmt.Sprintf("the cursor could not be negative %d", cursorInt)
-		action.Err = problem.P{
-			Type:   "invalid_parameters",
-			Title:  "Invalid Cursor Number",
-			Status: 400,
-			Detail: msg,
-		}
-	}
 }
 
 func (action *PaymentsIndexAction) loadRecords() {

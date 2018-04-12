@@ -45,7 +45,9 @@ func (base *Base) GetCursor(name string) string {
 		cursor = lei
 	}
 
-	return cursor
+	// if cursor is a negative number, the base.GetInt64() function will return 0
+	cursorInt := base.GetInt64(cursor)
+	return strconv.FormatInt(cursorInt, 10)
 }
 
 // GetString retrieves a string from either the URLParams, form or query string.
