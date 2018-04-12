@@ -2,7 +2,7 @@ package horizon
 
 import (
 	"errors"
-	"fmt"
+	fmt "fmt"
 
 	"github.com/stellar/go/services/horizon/internal/db2"
 	"github.com/stellar/go/services/horizon/internal/db2/history"
@@ -87,7 +87,7 @@ func (action *PaymentsIndexAction) loadParams() {
 	action.PagingParams = action.GetPageQuery()
 
 	cursorInt, _ := strconv.Atoi(action.PagingParams.Cursor)
-	if (cursorInt < 0) {
+	if cursorInt < 0 {
 		msg := fmt.Sprintf("the cursor could not be negative %d", cursorInt)
 		action.Err = problem.P{
 			Type:   "invalid_parameters",
