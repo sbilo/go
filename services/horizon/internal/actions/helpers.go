@@ -47,9 +47,9 @@ func (base *Base) GetCursor(name string) string {
 	}
 
 	// In case cursor is negative value, return InvalidField error
-	cursorInt, _ := strconv.Atoi(cursor)
-	if cursorInt < 0 {
-		msg := fmt.Sprintf("the cursor could not be negative %d", cursorInt)
+	cursorInt, err := strconv.Atoi(cursor)
+	if err == nil && cursorInt < 0 {
+		msg := fmt.Sprintf("the cursor %d is a negative number: ", cursorInt)
 		base.SetInvalidField("cursor", errors.New(msg))
 	}
 
