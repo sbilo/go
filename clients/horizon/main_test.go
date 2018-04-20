@@ -266,6 +266,80 @@ var _ = Describe("Horizon", func() {
 		})
 	})
 
+	Describe("LoadTrades", func() {
+		It("success response", func() {
+			hmock.On(
+				"GET",
+				"https://localhost/trades/?base_asset_code=&base_asset_issuer=&base_asset_type=native&counter_asset_code=SLT&counter_asset_issuer=GCKA6K5PCQ6PNF5RQBF7PQDJWRHO6UOGFMRLK3DYHDOI244V47XKQ4GP&counter_asset_type=credit_alphanum4&limit=3&offer_id=0&order=asc&resolution=300000",
+			).ReturnString(200, tradesResponse)
+
+			trades, err := client.LoadTrades(
+				Asset{Type: "native"},
+				Asset{"credit_alphanum4", "SLT", "GCKA6K5PCQ6PNF5RQBF7PQDJWRHO6UOGFMRLK3DYHDOI244V47XKQ4GP"},
+				0,
+				300000,
+				Limit(3),
+				Order(OrderAsc),
+			)
+			Expect(err).To(BeNil())
+			Expect(len(trades.Embedded.Records)).To(Equal(3))
+			Expect(trades.Embedded.Records[0].ID).To(Equal("73662146575085569-0"))
+			Expect(trades.Embedded.Records[0].OfferID).To(Equal("5151620"))
+			Expect(trades.Embedded.Records[0].BaseAccount).To(Equal("GBY6A3UQ4RSGWMFDXSIYEDUKJUCXQNDCYPBVLILUZXMJRPGI4PNYA5D7"))
+			Expect(trades.Embedded.Records[0].BaseAmount).To(Equal("0.4999200"))
+			Expect(trades.Embedded.Records[0].BaseAssetType).To(Equal("native"))
+			Expect(trades.Embedded.Records[0].CounterAccount).To(Equal("GANTILTFDYGNWWJ67PRHTOFYF4ALXBIZ2IVGQHABNN5LBD7MXM4FCH43"))
+			Expect(trades.Embedded.Records[0].CounterAmount).To(Equal("0.1055800"))
+			Expect(trades.Embedded.Records[0].CounterAssetType).To(Equal("credit_alphanum4"))
+			Expect(trades.Embedded.Records[0].CounterAssetCode).To(Equal("SLT"))
+			Expect(trades.Embedded.Records[0].CounterAssetIssuer).To(Equal("GCKA6K5PCQ6PNF5RQBF7PQDJWRHO6UOGFMRLK3DYHDOI244V47XKQ4GP"))
+			Expect(trades.Embedded.Records[0].BaseIsSeller).To(Equal(true))
+			Expect(trades.Embedded.Records[0].Price.N).To(Equal(int32(32999)))
+			Expect(trades.Embedded.Records[0].Price.D).To(Equal(int32(156250)))
+		})
+
+		It("failure response", func() {
+			hmock.On(
+				"GET",
+				"https://localhost/trades/?base_asset_code=&base_asset_issuer=&base_asset_type=native&counter_asset_code=SLT&counter_asset_issuer=GCKA6K5PCQ6PNF5RQBF7PQDJWRHO6UOGFMRLK3DYHDOI244V47XKQ4GP&counter_asset_type=credit_alphanum4&limit=3&offer_id=0&order=asc&resolution=300000",
+			).ReturnString(404, notFoundResponse)
+
+			_, err := client.LoadTrades(
+				Asset{Type: "native"},
+				Asset{"credit_alphanum4", "SLT", "GCKA6K5PCQ6PNF5RQBF7PQDJWRHO6UOGFMRLK3DYHDOI244V47XKQ4GP"},
+				0,
+				300000,
+				Limit(3),
+				Order(OrderAsc),
+			)
+			Expect(err).NotTo(BeNil())
+			Expect(err.Error()).To(HavePrefix("Horizon error"))
+			horizonError, ok := err.(*Error)
+			Expect(ok).To(BeTrue())
+			Expect(horizonError.Problem.Title).To(Equal("Resource Missing"))
+		})
+
+		It("connection error", func() {
+			hmock.On(
+				"GET",
+				"https://localhost/trades/?base_asset_code=&base_asset_issuer=&base_asset_type=native&counter_asset_code=SLT&counter_asset_issuer=GCKA6K5PCQ6PNF5RQBF7PQDJWRHO6UOGFMRLK3DYHDOI244V47XKQ4GP&counter_asset_type=credit_alphanum4&limit=3&offer_id=0&order=asc&resolution=300000",
+			).ReturnError("http.Client error")
+
+			_, err := client.LoadTrades(
+				Asset{Type: "native"},
+				Asset{"credit_alphanum4", "SLT", "GCKA6K5PCQ6PNF5RQBF7PQDJWRHO6UOGFMRLK3DYHDOI244V47XKQ4GP"},
+				0,
+				300000,
+				Limit(3),
+				Order(OrderAsc),
+			)
+			Expect(err).NotTo(BeNil())
+			Expect(err.Error()).To(ContainSubstring("http.Client error"))
+			_, ok := err.(*Error)
+			Expect(ok).To(BeFalse())
+		})
+	})
+
 	Describe("SubmitTransaction", func() {
 		var tx = "AAAAADSMMRmQGDH6EJzkgi/7PoKhphMHyNGQgDp2tlS/dhGXAAAAZAAT3TUAAAAwAAAAAAAAAAAAAAABAAAAAAAAAAMAAAABSU5SAAAAAAA0jDEZkBgx+hCc5IIv+z6CoaYTB8jRkIA6drZUv3YRlwAAAAFVU0QAAAAAADSMMRmQGDH6EJzkgi/7PoKhphMHyNGQgDp2tlS/dhGXAAAAAAX14QAAAAAKAAAAAQAAAAAAAAAAAAAAAAAAAAG/dhGXAAAAQLuStfImg0OeeGAQmvLkJSZ1MPSkCzCYNbGqX5oYNuuOqZ5SmWhEsC7uOD9ha4V7KengiwNlc0oMNqBVo22S7gk="
 
@@ -775,6 +849,123 @@ var orderBookResponse = `{
     "asset_type": "credit_alphanum4",
     "asset_code": "DEMO",
     "asset_issuer": "GBAMBOOZDWZPVV52RCLJQYMQNXOBLOXWNQAY2IF2FREV2WL46DBCH3BE"
+  }
+}`
+
+var tradesResponse = `{
+  "_links": {
+    "self": {
+      "href": "http://localhost:8000/trades?base_asset_code=\u0026base_asset_issuer=\u0026base_asset_type=native\u0026counter_asset_code=SLT\u0026counter_asset_issuer=GCKA6K5PCQ6PNF5RQBF7PQDJWRHO6UOGFMRLK3DYHDOI244V47XKQ4GP\u0026counter_asset_type=credit_alphanum4\u0026cursor=\u0026limit=3\u0026offer_id=0\u0026order=asc\u0026resolution=300000"
+    },
+    "next": {
+      "href": "http://localhost:8000/trades?base_asset_code=\u0026base_asset_issuer=\u0026base_asset_type=native\u0026counter_asset_code=SLT\u0026counter_asset_issuer=GCKA6K5PCQ6PNF5RQBF7PQDJWRHO6UOGFMRLK3DYHDOI244V47XKQ4GP\u0026counter_asset_type=credit_alphanum4\u0026cursor=73664324123504641-0\u0026limit=3\u0026offer_id=0\u0026order=asc\u0026resolution=300000"
+    },
+    "prev": {
+      "href": "http://localhost:8000/trades?base_asset_code=\u0026base_asset_issuer=\u0026base_asset_type=native\u0026counter_asset_code=SLT\u0026counter_asset_issuer=GCKA6K5PCQ6PNF5RQBF7PQDJWRHO6UOGFMRLK3DYHDOI244V47XKQ4GP\u0026counter_asset_type=credit_alphanum4\u0026cursor=73662146575085569-0\u0026limit=3\u0026offer_id=0\u0026order=desc\u0026resolution=300000"
+    }
+  },
+  "_embedded": {
+    "records": [
+      {
+        "_links": {
+          "self": {
+            "href": ""
+          },
+          "base": {
+            "href": "http://localhost:8000/accounts/GBY6A3UQ4RSGWMFDXSIYEDUKJUCXQNDCYPBVLILUZXMJRPGI4PNYA5D7"
+          },
+          "counter": {
+            "href": "http://localhost:8000/accounts/GANTILTFDYGNWWJ67PRHTOFYF4ALXBIZ2IVGQHABNN5LBD7MXM4FCH43"
+          },
+          "operation": {
+            "href": "http://localhost:8000/operations/73662146575085569"
+          }
+        },
+        "id": "73662146575085569-0",
+        "paging_token": "73662146575085569-0",
+        "ledger_close_time": "2018-04-03T02:20:33Z",
+        "offer_id": "5151620",
+        "base_account": "GBY6A3UQ4RSGWMFDXSIYEDUKJUCXQNDCYPBVLILUZXMJRPGI4PNYA5D7",
+        "base_amount": "0.4999200",
+        "base_asset_type": "native",
+        "counter_account": "GANTILTFDYGNWWJ67PRHTOFYF4ALXBIZ2IVGQHABNN5LBD7MXM4FCH43",
+        "counter_amount": "0.1055800",
+        "counter_asset_type": "credit_alphanum4",
+        "counter_asset_code": "SLT",
+        "counter_asset_issuer": "GCKA6K5PCQ6PNF5RQBF7PQDJWRHO6UOGFMRLK3DYHDOI244V47XKQ4GP",
+        "base_is_seller": true,
+        "price": {
+          "n": 32999,
+          "d": 156250
+        }
+      },
+      {
+        "_links": {
+          "self": {
+            "href": ""
+          },
+          "base": {
+            "href": "http://localhost:8000/accounts/GCSBMZV2BYD35GZZVM327APFZEOCHVXWT35ZKHKBSQIEV2H3ATNYWSQA"
+          },
+          "counter": {
+            "href": "http://localhost:8000/accounts/GAS6QKMRGS76XGKNNQ3MGWUNVQZCBLQAS2KPOITSGD6DPWQZRUQEY5BF"
+          },
+          "operation": {
+            "href": "http://localhost:8000/operations/73663447950188545"
+          }
+        },
+        "id": "73663447950188545-0",
+        "paging_token": "73663447950188545-0",
+        "ledger_close_time": "2018-04-03T02:45:45Z",
+        "offer_id": "5146821",
+        "base_account": "GCSBMZV2BYD35GZZVM327APFZEOCHVXWT35ZKHKBSQIEV2H3ATNYWSQA",
+        "base_amount": "200.7511450",
+        "base_asset_type": "native",
+        "counter_account": "GAS6QKMRGS76XGKNNQ3MGWUNVQZCBLQAS2KPOITSGD6DPWQZRUQEY5BF",
+        "counter_amount": "50.0000000",
+        "counter_asset_type": "credit_alphanum4",
+        "counter_asset_code": "SLT",
+        "counter_asset_issuer": "GCKA6K5PCQ6PNF5RQBF7PQDJWRHO6UOGFMRLK3DYHDOI244V47XKQ4GP",
+        "base_is_seller": true,
+        "price": {
+          "n": 10000000,
+          "d": 40150229
+        }
+      },
+      {
+        "_links": {
+          "self": {
+            "href": ""
+          },
+          "base": {
+            "href": "http://localhost:8000/accounts/GBGMFKBQ6LVLDUQDROQBRA73VX7LJ3TC4MDRQAYEIPUTJU32OSILAVW4"
+          },
+          "counter": {
+            "href": "http://localhost:8000/accounts/GANTILTFDYGNWWJ67PRHTOFYF4ALXBIZ2IVGQHABNN5LBD7MXM4FCH43"
+          },
+          "operation": {
+            "href": "http://localhost:8000/operations/73664324123504641"
+          }
+        },
+        "id": "73664324123504641-0",
+        "paging_token": "73664324123504641-0",
+        "ledger_close_time": "2018-04-03T03:02:45Z",
+        "offer_id": "5152692",
+        "base_account": "GBGMFKBQ6LVLDUQDROQBRA73VX7LJ3TC4MDRQAYEIPUTJU32OSILAVW4",
+        "base_amount": "0.9999999",
+        "base_asset_type": "native",
+        "counter_account": "GANTILTFDYGNWWJ67PRHTOFYF4ALXBIZ2IVGQHABNN5LBD7MXM4FCH43",
+        "counter_amount": "0.2178649",
+        "counter_asset_type": "credit_alphanum4",
+        "counter_asset_code": "SLT",
+        "counter_asset_issuer": "GCKA6K5PCQ6PNF5RQBF7PQDJWRHO6UOGFMRLK3DYHDOI244V47XKQ4GP",
+        "base_is_seller": false,
+        "price": {
+          "n": 100,
+          "d": 459
+        }
+      }
+    ]
   }
 }`
 
