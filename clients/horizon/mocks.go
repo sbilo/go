@@ -4,7 +4,6 @@ import (
 	"context"
 
 	"github.com/stretchr/testify/mock"
-	//"testing"
 )
 
 // MockClient is a mockable horizon client.
