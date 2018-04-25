@@ -66,7 +66,9 @@ func (m *MockClient) LoadTrades(
 	resolution int64,
 	params ...interface{},
 ) (tradesPage TradesPage, err error) {
-	a := m.Called(baseAsset, counterAsset, offerID, resolution, params)
+	args := []interface{}{baseAsset, counterAsset, offerID, resolution}
+	args = append(args, params...)
+	a := m.Called(args...)
 	return a.Get(0).(TradesPage), a.Error(1)
 }
 
