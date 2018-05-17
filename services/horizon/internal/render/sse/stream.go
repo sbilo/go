@@ -11,7 +11,7 @@ type Stream interface {
 	TrySendHeartbeat()
 	Send(Event)
 	SentCount() int
-	Done()
+	Finish()
 	SetLimit(limit int)
 	IsDone() bool
 	Err(error)
@@ -19,29 +19,24 @@ type Stream interface {
 
 // NewStream creates a new stream against the provided response writer
 func NewStream(ctx context.Context, w http.ResponseWriter, r *http.Request) Stream {
-	result := &stream{ctx, w, r, false, 0, 0, time.Now()}
+	result := &stream{ctx, w, r, false, 0, 0, time.Now(), false}
 	return result
 }
 
 type stream struct {
-	ctx         context.Context
-	w           http.ResponseWriter
-	r           *http.Request
-	done        bool
-	sent        int
-	limit       int
-	lastWriteAt time.Time
+	ctx          context.Context
+	w            http.ResponseWriter
+	r            *http.Request
+	done         bool
+	sent         int
+	limit        int
+	lastWriteAt  time.Time
+	sentPreamble bool
 }
 
 func (s *stream) Send(e Event) {
-	if s.sent == 0 {
-		ok := WritePreamble(s.ctx, s.w)
-		if !ok {
-			s.done = true
-			return
-		}
-	}
 
+	s.tryWritePreamble()
 	WriteEvent(s.ctx, s.w, e)
 	s.lastWriteAt = time.Now()
 	s.sent++
@@ -54,6 +49,7 @@ func (s *stream) TrySendHeartbeat() {
 		return
 	}
 
+	s.tryWritePreamble()
 	WriteHeartbeat(s.ctx, s.w)
 	s.lastWriteAt = time.Now()
 }
@@ -66,7 +62,8 @@ func (s *stream) SetLimit(limit int) {
 	s.limit = limit
 }
 
-func (s *stream) Done() {
+func (s *stream) Finish() {
+	s.tryWritePreamble()
 	WriteEvent(s.ctx, s.w, goodbyeEvent)
 	s.done = true
 }
@@ -82,4 +79,18 @@ func (s *stream) IsDone() bool {
 func (s *stream) Err(err error) {
 	WriteEvent(s.ctx, s.w, Event{Error: err})
 	s.done = true
+}
+
+func (s *stream) tryWritePreamble() {
+	if s.sentPreamble {
+		return
+	}
+
+	ok := WritePreamble(s.ctx, s.w)
+	if !ok {
+		s.done = true
+		return
+	}
+
+	s.sentPreamble = true
 }
