@@ -15,6 +15,7 @@ type Stream interface {
 	SetLimit(limit int)
 	IsDone() bool
 	Err(error)
+	IsEstablished() bool
 }
 
 // NewStream creates a new stream against the provided response writer
@@ -42,7 +43,6 @@ func (s *stream) Send(e Event) {
 	s.sent++
 }
 
-// TrySendHeartbeat will send
 func (s *stream) TrySendHeartbeat() {
 
 	if time.Since(s.lastWriteAt) < HeartbeatDelay {
@@ -79,6 +79,10 @@ func (s *stream) IsDone() bool {
 func (s *stream) Err(err error) {
 	WriteEvent(s.ctx, s.w, Event{Error: err})
 	s.done = true
+}
+
+func (s *stream) IsEstablished() bool {
+	return s.sentPreamble
 }
 
 func (s *stream) tryWritePreamble() {

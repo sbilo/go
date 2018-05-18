@@ -80,7 +80,9 @@ func (base *Base) Execute(action interface{}) {
 				return
 			}
 
-			stream.TrySendHeartbeat()
+			if stream.IsEstablished() {
+				stream.TrySendHeartbeat()
+			}
 
 			select {
 			case <-base.Ctx.Done():

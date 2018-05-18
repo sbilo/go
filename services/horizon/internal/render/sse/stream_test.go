@@ -19,6 +19,7 @@ func TestStream_TrySendHeartBeat(t *testing.T) {
 		w := httptest.NewRecorder()
 		s := NewStream(context.Background(), w, nil)
 
+		s.Send(Event{Data: "I'm real!"})
 		s.TrySendHeartbeat()
 		assert.Equal(t, 0, hbCount(w), "unexpected heartbeat: #1")
 
