@@ -13,7 +13,7 @@ import (
 
 // HeartbeatDelay represents the amount of time a stream will wait before sending a new heartbeat
 // down an idle stream.
-const HeartbeatDelay = 5 * time.Second
+const HeartbeatDelay = 30 * time.Second
 
 // Event is the packet of data that gets sent over the wire to a connected
 // client.
