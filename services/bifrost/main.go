@@ -340,7 +340,11 @@ func createServer(cfg config.Config, stressTest bool) *server.Server {
 		}
 
 		if cfg.Ethereum != nil {
-			ethereumClient, err = ethclient.Dial("http://" + cfg.Ethereum.RpcServer)
+			var ethereumRpcAddress = "http://" + cfg.Ethereum.RpcServer
+			if cfg.Ethereum.RpcSsl {
+				ethereumRpcAddress = "https://" + cfg.Ethereum.RpcServer
+			}
+			ethereumClient, err = ethclient.Dial(ethereumRpcAddress)
 			if err != nil {
 				log.WithField("err", err).Error("Error connecting to geth")
 				os.Exit(-1)

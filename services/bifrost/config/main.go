@@ -66,7 +66,8 @@ type ethereumConfig struct {
 	// TokenPrice is a price of one token in ETH
 	TokenPrice string `valid:"required" toml:"token_price"`
 	// Host only
-	RpcServer string `valid:"required" toml:"rpc_server"`
+	RpcServer     string `valid:"required" toml:"rpc_server"`
+	RpcSsl        bool   `valid:"required" toml:"rpc_ssl" `
 }
 
 func (c Config) SignerPublicKey() string {
